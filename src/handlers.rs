@@ -74,6 +74,15 @@ pub async fn get_fortune(
         .into_response())
 }
 
+pub async fn index() -> axum::response::Html<&'static str> {
+    axum::response::Html(
+        "<h1>fortune-402</h1>\
+         <p>A test server for <a href=\"https://docs.lightning.engineering/the-lightning-network/l402\">L402</a>. \
+         Pay a Lightning invoice, get a fortune cookie.</p>\
+         <p>Try it: <code>GET /fortune</code></p>",
+    )
+}
+
 pub async fn health() -> &'static str {
     "ok"
 }

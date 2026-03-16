@@ -38,6 +38,7 @@ async fn main() -> anyhow::Result<()> {
     });
 
     let app = Router::new()
+        .route("/", get(handlers::index))
         .route("/fortune", get(handlers::get_fortune))
         .route("/health", get(handlers::health))
         .layer(TraceLayer::new_for_http())
