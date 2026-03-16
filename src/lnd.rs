@@ -7,13 +7,6 @@ pub struct LndClient {
     client: fedimint_tonic_lnd::Client,
 }
 
-pub enum InvoiceState {
-    Settled { preimage: Vec<u8> },
-    Open,
-    Canceled,
-    Accepted,
-}
-
 impl LndClient {
     pub async fn connect(config: &Config) -> Result<Self, AppError> {
         let client = fedimint_tonic_lnd::connect(
@@ -52,31 +45,4 @@ impl LndClient {
         Ok((response.r_hash, response.payment_request))
     }
 
-    /// Look up an invoice by payment hash to check its state.
-    pub async fn lookup_invoice(
-        &mut self,
-        payment_hash: &[u8],
-    ) -> Result<InvoiceState, AppError> {
-        let request = lnrpc::PaymentHash {
-            r_hash: payment_hash.to_vec(),
-            ..Default::default()
-        };
-
-        let invoice = self
-            .client
-            .lightning()
-            .lookup_invoice(request)
-            .await?
-            .into_inner();
-
-        match lnrpc::invoice::InvoiceState::try_from(invoice.state) {
-            Ok(lnrpc::invoice::InvoiceState::Settled) => Ok(InvoiceState::Settled {
-                preimage: invoice.r_preimage,
-            }),
-            Ok(lnrpc::invoice::InvoiceState::Open) => Ok(InvoiceState::Open),
-            Ok(lnrpc::invoice::InvoiceState::Canceled) => Ok(InvoiceState::Canceled),
-            Ok(lnrpc::invoice::InvoiceState::Accepted) => Ok(InvoiceState::Accepted),
-            Err(_) => Ok(InvoiceState::Open),
-        }
-    }
 }
