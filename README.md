@@ -10,15 +10,19 @@ Implements the [L402 protocol](https://docs.lightning.engineering/the-lightning-
 2. Pay the invoice, get the preimage
 3. `GET /fortune` with `Authorization: L402 <token>:<preimage>` → receive your fortune
 
-```
-$ curl -s http://localhost:3402/fortune | jq
-{
-  "payment_request": "lnbc10n1p...",
-  "amount_sats": 1
-}
+```bash
+# 1. Request a fortune — get back a 402 with an invoice and token
+$ curl -si http://localhost:3402/fortune
+HTTP/1.1 402 Payment Required
+www-authenticate: L402 token="abc123...", invoice="lnbc10n1p..."
 
-# after paying the invoice...
-$ curl -s -H "Authorization: L402 <token>:<preimage>" http://localhost:3402/fortune | jq
+{"payment_request":"lnbc10n1p...","amount_sats":1}
+
+# 2. Extract the token from the www-authenticate header
+#    and pay the invoice to get the preimage
+
+# 3. Send both back to get your fortune
+$ curl -s -H "Authorization: L402 abc123...:deadbeef..." http://localhost:3402/fortune | jq
 {
   "fortune": "The cypherpunk writes code."
 }
