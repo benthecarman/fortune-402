@@ -15,10 +15,9 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> Result<Self> {
-        let lnd_address = std::env::var("LND_ADDRESS")
-            .unwrap_or_else(|_| "https://127.0.0.1:10009".to_string());
-        let lnd_cert_path =
-            std::env::var("LND_CERT_PATH").context("LND_CERT_PATH must be set")?;
+        let lnd_address =
+            std::env::var("LND_ADDRESS").unwrap_or_else(|_| "https://127.0.0.1:10009".to_string());
+        let lnd_cert_path = std::env::var("LND_CERT_PATH").context("LND_CERT_PATH must be set")?;
         let lnd_macaroon_path =
             std::env::var("LND_MACAROON_PATH").context("LND_MACAROON_PATH must be set")?;
         let listen_addr: SocketAddr = std::env::var("LISTEN_ADDR")
@@ -39,9 +38,9 @@ impl Config {
         let root_key = match std::env::var("L402_ROOT_KEY") {
             Ok(hex_str) => {
                 let bytes = hex::decode(&hex_str).context("L402_ROOT_KEY must be valid hex")?;
-                let key: [u8; 32] = bytes
-                    .try_into()
-                    .map_err(|_| anyhow::anyhow!("L402_ROOT_KEY must be 32 bytes (64 hex chars)"))?;
+                let key: [u8; 32] = bytes.try_into().map_err(|_| {
+                    anyhow::anyhow!("L402_ROOT_KEY must be 32 bytes (64 hex chars)")
+                })?;
                 key
             }
             Err(_) => {

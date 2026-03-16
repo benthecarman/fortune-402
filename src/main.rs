@@ -8,8 +8,8 @@ mod token;
 
 use std::sync::Arc;
 
-use axum::Router;
 use axum::routing::get;
+use axum::Router;
 use tower_http::trace::TraceLayer;
 
 use crate::config::Config;

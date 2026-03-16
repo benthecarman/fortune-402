@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
+use axum::extract::State;
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
-use axum::extract::State;
 use tokio::sync::Mutex;
 
 use crate::config::Config;
@@ -51,9 +51,9 @@ pub async fn get_fortune(
         .await?
     };
 
-    let payment_hash_arr: [u8; 32] = payment_hash
-        .try_into()
-        .map_err(|_| AppError::Internal(anyhow::anyhow!("unexpected payment hash length from LND")))?;
+    let payment_hash_arr: [u8; 32] = payment_hash.try_into().map_err(|_| {
+        AppError::Internal(anyhow::anyhow!("unexpected payment hash length from LND"))
+    })?;
 
     let token = Token::mint(&state.config.root_key, payment_hash_arr);
     let token_b64 = token.serialize();

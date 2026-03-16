@@ -44,5 +44,4 @@ impl LndClient {
 
         Ok((response.r_hash, response.payment_request))
     }
-
 }

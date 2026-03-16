@@ -26,14 +26,10 @@ pub fn parse_authorization(header_value: &str) -> Result<L402Credentials, String
         .split_once(':')
         .ok_or("authorization must contain ':' separator")?;
 
-    let preimage =
-        hex::decode(preimage_part).map_err(|e| format!("invalid preimage hex: {e}"))?;
+    let preimage = hex::decode(preimage_part).map_err(|e| format!("invalid preimage hex: {e}"))?;
 
     if preimage.len() != 32 {
-        return Err(format!(
-            "preimage must be 32 bytes, got {}",
-            preimage.len()
-        ));
+        return Err(format!("preimage must be 32 bytes, got {}", preimage.len()));
     }
 
     Ok(L402Credentials {
@@ -45,11 +41,7 @@ pub fn parse_authorization(header_value: &str) -> Result<L402Credentials, String
 /// Verify L402 credentials:
 /// 1. Deserialize and verify the token HMAC
 /// 2. Check that SHA256(preimage) == payment_hash in the token
-pub fn verify_l402(
-    root_key: &[u8; 32],
-    token_b64: &str,
-    preimage: &[u8],
-) -> Result<(), String> {
+pub fn verify_l402(root_key: &[u8; 32], token_b64: &str, preimage: &[u8]) -> Result<(), String> {
     let token = Token::deserialize(token_b64)?;
     token.verify(root_key)?;
 
