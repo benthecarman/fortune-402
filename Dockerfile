@@ -1,5 +1,7 @@
 FROM rust:1.85-slim AS builder
 
+RUN apt-get update && apt-get install -y protobuf-compiler && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Copy manifests first for dependency caching
