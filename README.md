@@ -6,19 +6,23 @@ Implements the [L402 protocol](https://docs.lightning.engineering/the-lightning-
 
 ## How it works
 
-1. `GET /fortune` → server returns HTTP 402 with a Lightning invoice
+1. `GET /fortune` → server returns HTTP 402 with a `www-authenticate` header containing a macaroon token and a Lightning invoice:
+   ```
+   www-authenticate: L402 token="<macaroon>", invoice="<bolt11>"
+   ```
 2. Pay the invoice, get the preimage
-3. `GET /fortune` with `Authorization: L402 <token>:<preimage>` → receive your fortune
+3. `GET /fortune` with `Authorization: L402 <macaroon>:<preimage>` → receive your fortune
 
-```
-$ curl -s http://localhost:3402/fortune | jq
-{
-  "payment_request": "lnbc10n1p...",
-  "amount_sats": 1
-}
+```bash
+# Step 1: Request a fortune, get the L402 challenge
+$ curl -si http://localhost:3402/fortune
+HTTP/1.1 402 Payment Required
+www-authenticate: L402 token="<macaroon>", invoice="lnbc10n1p..."
 
-# after paying the invoice...
-$ curl -s -H "Authorization: L402 <token>:<preimage>" http://localhost:3402/fortune | jq
+# Step 2: Pay the invoice from the header and note the preimage
+
+# Step 3: Use the macaroon (from the token field) + preimage to authenticate
+$ curl -s -H "Authorization: L402 <macaroon>:<preimage>" http://localhost:3402/fortune | jq
 {
   "fortune": "The cypherpunk writes code."
 }
