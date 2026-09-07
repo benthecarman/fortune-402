@@ -4,6 +4,7 @@ mod fortunes;
 mod handlers;
 mod l402;
 mod lnd;
+mod systemd;
 mod token;
 
 use std::sync::Arc;
@@ -50,7 +51,47 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::info!("Listening on {listen_addr}");
     let listener = tokio::net::TcpListener::bind(listen_addr).await?;
-    axum::serve(listener, app).await?;
+
+    // The listener is bound and LND is reachable, so report readiness to
+    // systemd (a no-op outside a Type=notify unit)
+    systemd::spawn_watchdog();
+    systemd::notify_ready(&format!("Serving on http://{listen_addr}"));
+
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await?;
 
     Ok(())
+}
+
+/// Resolves when the process receives a shutdown signal: Ctrl+C (SIGINT) or,
+/// on unix, SIGTERM, which is what systemd and Docker send on stop.
+///
+/// Tells systemd the service is stopping before returning, so the graceful
+/// shutdown drains in-flight requests while systemd waits for the exit.
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("failed to create Ctrl+C shutdown signal");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("failed to create SIGTERM shutdown signal")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
+
+    tracing::info!("Shutdown signal received, stopping server");
+    systemd::notify_stopping();
 }

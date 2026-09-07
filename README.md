@@ -50,6 +50,45 @@ cp .env.example .env
 cargo run
 ```
 
+## systemd
+
+The server speaks the `sd_notify` protocol, so the unit can use `Type=notify`.
+`systemctl start` then returns only once the server is connected to LND and
+listening, and units ordered after it wait for that. `systemctl stop` sends
+`SIGTERM`, which starts a graceful shutdown. If `WatchdogSec=` is set, the
+server pings the watchdog and systemd restarts it when the process stops
+responding.
+
+Create a dedicated system user (e.g. `useradd --system fortune`) and make the
+macaroon and cert readable by it.
+
+```ini
+[Unit]
+Description=fortune-402 L402 fortune cookie server
+After=network-online.target lnd.service
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=fortune
+ExecStart=/usr/local/bin/fortune-402
+Environment=LND_ADDRESS=https://127.0.0.1:10009
+Environment=LND_CERT_PATH=/etc/fortune-402/tls.cert
+Environment=LND_MACAROON_PATH=/etc/fortune-402/admin.macaroon
+Environment=LISTEN_ADDR=127.0.0.1:3402
+# Secrets such as L402_ROOT_KEY go here, not in the unit file
+EnvironmentFile=-/etc/fortune-402/env
+WatchdogSec=30
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Outside systemd the notifications are skipped, so the same binary runs
+unchanged by hand or in Docker.
+
 ## Docker
 
 ```bash
