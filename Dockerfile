@@ -26,4 +26,10 @@ FROM debian:bookworm-slim AS runtime
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /app/target/release/fortune-402 /usr/local/bin/fortune-402
 EXPOSE 3402
+
+# Probes /health on LISTEN_ADDR (default 0.0.0.0:3402) over loopback. The probe
+# is a separate process that reads the same environment variables as the server.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD ["fortune-402", "health-check"]
+
 CMD ["fortune-402"]

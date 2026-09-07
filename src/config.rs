@@ -20,10 +20,7 @@ impl Config {
         let lnd_cert_path = std::env::var("LND_CERT_PATH").context("LND_CERT_PATH must be set")?;
         let lnd_macaroon_path =
             std::env::var("LND_MACAROON_PATH").context("LND_MACAROON_PATH must be set")?;
-        let listen_addr: SocketAddr = std::env::var("LISTEN_ADDR")
-            .unwrap_or_else(|_| "0.0.0.0:3402".to_string())
-            .parse()
-            .context("invalid LISTEN_ADDR")?;
+        let listen_addr = listen_addr_from_env()?;
         let invoice_amount_sats: i64 = std::env::var("INVOICE_AMOUNT_SATS")
             .unwrap_or_else(|_| "1".to_string())
             .parse()
@@ -64,4 +61,16 @@ impl Config {
             root_key,
         })
     }
+}
+
+/// Reads the HTTP listen address from `LISTEN_ADDR`, defaulting to
+/// `0.0.0.0:3402`.
+///
+/// Separate from [`Config::from_env`] so the `health-check` subcommand can
+/// find the server without the LND credentials the rest of the config needs.
+pub fn listen_addr_from_env() -> Result<SocketAddr> {
+    std::env::var("LISTEN_ADDR")
+        .unwrap_or_else(|_| "0.0.0.0:3402".to_string())
+        .parse()
+        .context("invalid LISTEN_ADDR")
 }

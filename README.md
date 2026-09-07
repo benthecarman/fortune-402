@@ -106,3 +106,10 @@ Pre-built images are available from GitHub Container Registry:
 ```bash
 docker pull ghcr.io/benthecarman/fortune-402:main
 ```
+
+The image has a `HEALTHCHECK` that runs `fortune-402 health-check` every 30
+seconds. It probes `/health` on the port from `LISTEN_ADDR` (default `3402`)
+over loopback and exits non-zero if the server does not answer. The probe is a
+separate process that reads the same environment variables as the server, so a
+custom `-e LISTEN_ADDR` applies to both. The same command works outside Docker,
+e.g. `LISTEN_ADDR=127.0.0.1:8080 fortune-402 health-check`.
