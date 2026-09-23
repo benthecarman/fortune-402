@@ -4,6 +4,7 @@ mod fortunes;
 mod handlers;
 mod l402;
 mod lnd;
+mod replay;
 mod systemd;
 mod token;
 
