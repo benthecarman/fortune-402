@@ -22,7 +22,10 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 dotenvy = "0.15"
 http = "1"
+lightning-invoice = "0.34"
+serde_jcs = "0.2"
 rusqlite = { version = "0.40", features = ["bundled"] }
+bitcoin = "0.32"
 
 [target.'cfg(unix)'.dependencies]
 # sd_notify protocol for Type=notify systemd units; pure Rust, no libsystemd

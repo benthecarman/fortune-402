@@ -7,6 +7,7 @@ mod lnd;
 mod replay;
 mod systemd;
 mod token;
+mod x402;
 
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::sync::Arc;
