@@ -79,7 +79,9 @@ pub async fn index() -> axum::response::Html<&'static str> {
         "<h1>fortune-402</h1>\
          <p>A test server for <a href=\"https://docs.lightning.engineering/the-lightning-network/l402\">L402</a>. \
          Pay a Lightning invoice, get a fortune cookie.</p>\
-         <p>Try it: <code>GET /fortune</code></p>",
+         <p>Try it: <code>GET /fortune</code></p>\
+         <p>Or pay over <a href=\"https://github.com/x402-foundation/x402\">x402</a> \
+         with Lightning: <code>GET /x402</code></p>",
     )
 }
 

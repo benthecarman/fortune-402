@@ -27,6 +27,10 @@ RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/
 COPY --from=builder /app/target/release/fortune-402 /usr/local/bin/fortune-402
 EXPOSE 3402
 
+# Used x402 payments must survive container restarts
+ENV REPLAY_DB_PATH=/data/fortune-402.db
+VOLUME /data
+
 # Probes /health on LISTEN_ADDR (default 0.0.0.0:3402) over loopback. The probe
 # is a separate process that reads the same environment variables as the server.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
