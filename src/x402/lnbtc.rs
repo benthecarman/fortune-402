@@ -629,7 +629,8 @@ pub(crate) mod tests {
     #[test]
     fn core_field_mismatches_are_rejected() {
         let terms = spec_terms(ARTICLE_A);
-        let cases: [(fn(&mut PaymentRequirements), ErrorReason); 6] = [
+        type Mutation = fn(&mut PaymentRequirements);
+        let cases: [(Mutation, ErrorReason); 6] = [
             (|a| a.scheme = "upto".into(), ErrorReason::UnsupportedScheme),
             (
                 |a| a.network = Network::Testnet.caip2().into(),

@@ -12,6 +12,9 @@ pub enum AppError {
     #[error("L402 auth error: {0}")]
     L402(String),
 
+    #[error("x402 payment error: {0}")]
+    X402(String),
+
     #[error("{0}")]
     Internal(#[from] anyhow::Error),
 }
@@ -20,6 +23,7 @@ impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let status = match &self {
             AppError::L402(_) => StatusCode::UNAUTHORIZED,
+            AppError::X402(_) => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         };
         let body = serde_json::json!({ "error": self.to_string() });

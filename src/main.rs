@@ -23,6 +23,7 @@ use tower_http::trace::TraceLayer;
 use crate::config::Config;
 use crate::handlers::AppState;
 use crate::lnd::LndClient;
+use crate::x402::handler::X402State;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -55,12 +56,15 @@ async fn main() -> anyhow::Result<()> {
         config,
     });
 
-    let app = Router::new()
+    let mut app = Router::new()
         .route("/", get(handlers::index))
         .route("/fortune", get(handlers::get_fortune))
         .route("/health", get(handlers::health))
-        .layer(TraceLayer::new_for_http())
-        .with_state(state);
+        .with_state(state.clone());
+    if let Some(x402) = X402State::from_app(&state).await? {
+        app = app.merge(x402::handler::router(Arc::new(x402)));
+    }
+    let app = app.layer(TraceLayer::new_for_http());
 
     tracing::info!("Listening on {listen_addr}");
     let listener = tokio::net::TcpListener::bind(listen_addr).await?;
