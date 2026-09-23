@@ -35,15 +35,21 @@ pub enum Network {
     Mainnet,
     /// testnet3
     Testnet,
+    /// Not in the spec, which defines only mainnet and testnet3. Follows its
+    /// BIP-122 convention, so clients must opt in to the identifier. Every
+    /// signet shares one genesis block, so custom signets are
+    /// indistinguishable from the default one.
+    Signet,
 }
 
 impl Network {
-    /// Maps LND's chain network name. Signet, regtest and testnet4 have no
-    /// `lnbtc` identifier.
+    /// Maps LND's chain network name. Regtest and testnet4 have no `lnbtc`
+    /// identifier.
     pub fn from_lnd(name: &str) -> Option<Self> {
         match name {
             "mainnet" => Some(Network::Mainnet),
             "testnet" => Some(Network::Testnet),
+            "signet" => Some(Network::Signet),
             _ => None,
         }
     }
@@ -54,6 +60,7 @@ impl Network {
         match self {
             Network::Mainnet => "lnbtc:000000000019d6689c085ae165831e93",
             Network::Testnet => "lnbtc:000000000933ea01ad0ee984209779ba",
+            Network::Signet => "lnbtc:00000008819873e925422c1ff0f99f7c",
         }
     }
 
@@ -61,6 +68,7 @@ impl Network {
         match self {
             Network::Mainnet => Currency::Bitcoin,
             Network::Testnet => Currency::BitcoinTestnet,
+            Network::Signet => Currency::Signet,
         }
     }
 }
@@ -534,6 +542,48 @@ pub(crate) mod tests {
 
     fn rejected(payload: &PaymentPayload, terms: &Terms, now: u64) -> ErrorReason {
         verify(payload, terms, now).unwrap_err()
+    }
+
+    #[test]
+    fn network_ids_follow_bip122() {
+        for (network, bitcoin_network) in [
+            (Network::Mainnet, bitcoin::Network::Bitcoin),
+            (Network::Testnet, bitcoin::Network::Testnet),
+            (Network::Signet, bitcoin::Network::Signet),
+        ] {
+            let genesis = bitcoin::blockdata::constants::genesis_block(bitcoin_network)
+                .block_hash()
+                .to_string();
+            assert_eq!(network.caip2(), format!("lnbtc:{}", &genesis[..32]));
+        }
+    }
+
+    #[test]
+    fn signet_invoice_settles_only_on_signet() {
+        let terms = Terms {
+            network: Network::Signet,
+            ..spec_terms(ARTICLE_A)
+        };
+        let key = secret_key();
+        let hash = terms.request_hash;
+
+        let (invoice, preimage) =
+            sign_invoice(&key, Currency::Signet, 25_000, hash, 300, SPEC_TIME);
+        let signet = payload(terms.requirements(&invoice), &hex::encode(preimage));
+        let settlement = settle(&memory_store(), &signet, &terms, SPEC_TIME).unwrap();
+        assert_eq!(
+            settlement.transaction,
+            hex::encode(Sha256::digest(preimage))
+        );
+
+        // a testnet invoice shares the tb prefix but not the currency
+        let (invoice, preimage) =
+            sign_invoice(&key, Currency::BitcoinTestnet, 25_000, hash, 300, SPEC_TIME);
+        let testnet = payload(terms.requirements(&invoice), &hex::encode(preimage));
+        assert_eq!(
+            rejected(&testnet, &terms, SPEC_TIME),
+            ErrorReason::InvoiceCurrencyMismatch
+        );
     }
 
     #[test]

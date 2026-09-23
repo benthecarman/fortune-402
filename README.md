@@ -73,7 +73,7 @@ x402 is enabled when `PUBLIC_URL` is set. Requirements:
 - `PUBLIC_URL` must be the URL clients use to reach the server, because each
   payment is bound to the full request URL. Behind a reverse proxy, use the
   public URL, not the listen address.
-- LND must be on mainnet or testnet3. The scheme has no identifier for signet,
+- LND must be on mainnet, testnet3 or signet. The scheme has no identifier for
   testnet4 or regtest, so on those networks `/x402` is disabled with a warning.
 - The server must be the only party that can create invoices on the LND node.
   Anyone else who can create invoices on it could pay their own invoice and use

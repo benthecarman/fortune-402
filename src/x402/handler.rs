@@ -81,7 +81,7 @@ impl X402State<Arc<AppState>> {
         let info = app.lnd.lock().await.get_info().await?;
         let Some(network) = Network::from_lnd(&info.network) else {
             tracing::warn!(
-                "LND is on {}, which x402 Lightning does not support (only mainnet and testnet3), /x402 disabled",
+                "LND is on {}, which x402 Lightning does not support (only mainnet, testnet3 and signet), /x402 disabled",
                 info.network
             );
             return Ok(None);
@@ -109,6 +109,12 @@ impl X402State<Arc<AppState>> {
             config.public_url,
             network.caip2()
         );
+        if network == Network::Signet {
+            tracing::warn!(
+                "Signet is not in the x402 Lightning spec; only clients that accept {} can pay",
+                network.caip2()
+            );
+        }
         Ok(Some(X402State {
             issuer: app.clone(),
             network,
